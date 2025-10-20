@@ -61,7 +61,7 @@ INLINE double freqToPitch(double freq, double masterTuneA4);
 and then sets the pointer to NULL. */
 INLINE void ifNotNullDeleteAndSetNull(void* pointer);
 
-/** Maps an integer index in the range 0...numIndices-1 into a normalized floating point number in 
+/** Maps an integer index in the range 0...numIndices-1 into a normalized floating point number in
 the range 0...1. */
 INLINE float indexToNormalizedValue(int index, int numIndices);
 
@@ -115,7 +115,7 @@ INLINE double expToLinWithOffset(double in, double inMin, double inMax, double o
 template <class T>
 INLINE T nextPowerOfTwo(T x);
 
-/** Maps a normalized floating point number in the range 0...1 into an integer index in the range 
+/** Maps a normalized floating point number in the range 0...1 into an integer index in the range
 0...numIndices-1. */
 INLINE int normalizedValueToIndex(float normalizedValue, int numIndices);
 
@@ -132,10 +132,10 @@ INLINE double pitchToFreq(double pitch, double masterTuneA4);
 INLINE double radiantToDegree(double radiant);
 
 /** Generates a random number that is uniformly distributed between min and max (inclusive). The
-underlying integer pseudo random number generator is a linear congruential with period length of 
-2^32. It is based on Numerical Recipies in C (2nd edition), page 284. You may pass a seed to the 
-first call to initialize it - otherwise it will use 0 as seed. A negative number (as in the default 
-argument) will indicate to not initialize the state and just generate a random number based on the 
+underlying integer pseudo random number generator is a linear congruential with period length of
+2^32. It is based on Numerical Recipies in C (2nd edition), page 284. You may pass a seed to the
+first call to initialize it - otherwise it will use 0 as seed. A negative number (as in the default
+argument) will indicate to not initialize the state and just generate a random number based on the
 last state (which is the case for a typical call). */
 INLINE double randomUniform(double min = 0.0, double max = 1.0, int seed = -1);
 
@@ -404,7 +404,7 @@ INLINE double radiantToDegree(double radiant)
 
 INLINE double randomUniform(double min, double max, int seed)
 {
-  static unsigned long state = 0;
+  unsigned long state = 0;
   if( seed >= 0 )
     state = seed;                                        // initialization, if desired
   state = 1664525*state + 1013904223;                    // mod implicitely by integer overflow
