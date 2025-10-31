@@ -10,7 +10,7 @@ project(JC303 VERSION 0.12.1)
 
 ### Dependency versions ###
 
-set(LIB_JUCE_TAG "7.0.5")
+set(LIB_JUCE_TAG "8.0.5")
 set(LIB_CLAP_TAG "a3227c52fa082d2df33f4377ed1e050dd8a52595")
 set(LIB_CHOWDSP_UTILS_TAG "ffc70ba399f9afaeefb996eb14e55a1d487270b8")
 
