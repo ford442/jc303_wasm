@@ -20,6 +20,15 @@ FROM debian:11
 # Prevent interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
 
+# 1. Install Kitware's CMake (3.22+)
+RUN apt-get update && \
+    apt-get install -y ca-certificates gpg wget && \
+    wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc | gpg --dearmor - > /usr/share/keyrings/kitware-archive-keyring.gpg && \
+    echo 'deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ focal main' > /etc/apt/sources.list.d/kitware.list && \
+    apt-get update && \
+    apt-get install -y cmake && \
+    cmake --version
+    
 # 1. Update system and install build essentials
 RUN apt-get update && \
     apt-get install -y \
