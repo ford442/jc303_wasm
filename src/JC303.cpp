@@ -547,19 +547,28 @@ void JC303::processBlock (juce::AudioBuffer<float>& buffer,
 {
     juce::ScopedNoDenormals noDenormals;
     auto currentSample = 0;
-
+    const auto numSamples = buffer.getNumSamples();
+    
     // clear buffer
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-        buffer.clear (i, 0, buffer.getNumSamples());
+        buffer.clear (i, 0, numSamples);
 
-    // handle midi note messages
+    // handle MIDI messages
     for (const auto midiMetadata : midiMessages)
     {
         const auto message = midiMetadata.getMessage();
-        const auto messagePosition = static_cast<int>(message.getTimeStamp());
+        const auto samplePosition = midiMetadata.samplePosition;
+        
+        // validate sample position
+        if (samplePosition < currentSample || samplePosition >= numSamples)
+            continue;
 
+        // render audio up to this MIDI event
+        render303(buffer, currentSample, samplePosition);
+
+        // process MIDI event
         if (message.isNoteOn())
         {
             open303Core.noteOn(message.getNoteNumber(), message.getVelocity(), 0);
@@ -570,20 +579,15 @@ void JC303::processBlock (juce::AudioBuffer<float>& buffer,
         }
         else if (message.isAllNotesOff())
         {
-            for(int i=0; i <= 127; i++) {
+            for (int i = 0; i <= 127; i++)
                 open303Core.noteOn(i, 0, 0);
-            }
-        } else {
-            continue;
         }
 
-        // render open303
-        render303(buffer, currentSample, messagePosition);
-        currentSample = messagePosition;
+        currentSample = samplePosition;
     }
 
-    // render open303
-    render303(buffer, currentSample, buffer.getNumSamples());
+    // render remaining samples
+    render303(buffer, currentSample, numSamples);
 
     // render GuitarML overdrive
     if (*switchOverdriveState) {
@@ -597,7 +601,7 @@ void JC303::processBlock (juce::AudioBuffer<float>& buffer,
 
     // copy mono channel to stereo
     for (int ch = 1; ch < buffer.getNumChannels(); ++ch)
-        buffer.copyFrom(ch, 0, buffer, 0, 0, buffer.getNumSamples());
+        buffer.copyFrom(ch, 0, buffer, 0, 0, numSamples);
 }
 
 int JC303::loadOverdriveTones()
