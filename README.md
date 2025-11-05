@@ -1,6 +1,6 @@
-# A JUCE port of Open303
+# JC-303 Plugin
 
-A Cmake JUCE port of [Robin Schmidt`s Open303](https://github.com/RobinSchmidt/Open303) with added features, a Roland TB-303 clone plugin.
+This is a Free Roland TB-303 clone plugin. A Cmake JUCE port of [Robin Schmidt`s Open303](https://github.com/RobinSchmidt/Open303) with added features.
 
 ![JC-303 Screenshot](https://raw.githubusercontent.com/midilab/jc303/main/img/jc303.png)
 
@@ -12,13 +12,13 @@ The Open303 engine part of this software is also licensed under the MIT License.
 
 Supports Windows, Linux and MacOS. You may find CLAP, VST3, LV2 and AU formats available to download. For VST2 plugin you need to compile it by your own self using vst2 sdk from Steinberg - vstsdk2.4.
 
-MacOS Universal - Intel and ARM: [jc303-macos-universal-plugins.zip](https://github.com/midilab/jc303/releases/download/v0.12.2/jc303-0.12.2-macos-universal-plugins.zip)
+MacOS Universal - Intel and ARM: [jc303-macos_universal-plugins.zip](https://github.com/midilab/jc303/releases/download/v0.12.3/jc303-0.12.3-macos_universal-plugins.zip)
 
-Windows Intel x64: [jc303-win64-plugins.zip](https://github.com/midilab/jc303/releases/download/v0.12.2/jc303-0.12.2-windows_x64-plugins.zip)
+Windows Intel x64: [jc303-windows_x64-plugins.zip](https://github.com/midilab/jc303/releases/download/v0.12.3/jc303-0.12.3-windows_x64-plugins.zip)
 
-Linux Intel x64: [jc303-linux64-plugins.zip](https://github.com/midilab/jc303/releases/download/v0.12.2/jc303-0.12.2-linux_x64-plugins.zip)  
+Linux Intel x64: [jc303-linux_x64-plugins.zip](https://github.com/midilab/jc303/releases/download/v0.12.3/jc303-0.12.3-linux_x64-plugins.zip)  
 
-Linux ARM: Soon...  
+Linux ARM64: Soon...  
 
 ## Installation
 
@@ -62,7 +62,7 @@ The `-D CMAKE_OSX_DEPLOYMENT_TARGET=10.13` flag sets the minimum MacOS version t
 To generate a **Visual Studio 2022 (17)** project, run:
 
 ```sh
-cmake -B build -G "Visual Studio 17"
+cmake -B build -G "Visual Studio 17" -A x64
 ```
 
 ### GNU Linux
