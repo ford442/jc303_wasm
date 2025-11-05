@@ -5,12 +5,12 @@ if(WIN32)
     add_compile_definitions(__amd64__=1)
 endif()
 
-project(JC303 VERSION 0.12.1)
+project(JC303 VERSION 0.12.3)
 
 
 ### Dependency versions ###
 
-set(LIB_JUCE_TAG "7.0.5")
+set(LIB_JUCE_TAG "8.0.5")
 set(LIB_CLAP_TAG "a3227c52fa082d2df33f4377ed1e050dd8a52595")
 set(LIB_CHOWDSP_UTILS_TAG "ffc70ba399f9afaeefb996eb14e55a1d487270b8")
 
@@ -159,7 +159,6 @@ juce_generate_juce_header("${PROJECT_NAME}")
 target_compile_definitions("${PROJECT_NAME}"
     PUBLIC
         # JUCE_WEB_BROWSER and JUCE_USE_CURL would be on by default, but you might not need them.
-        JUCE_DISPLAY_SPLASH_SCREEN=0
         JUCE_WEB_BROWSER=0  # If you remove this, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_plugin` call
         JUCE_USE_CURL=0     # If you remove this, add `NEEDS_CURL TRUE` to the `juce_add_plugin` call
         JUCE_VST3_CAN_REPLACE_VST2=0)

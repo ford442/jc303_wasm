@@ -136,9 +136,8 @@ void MipMappedWaveTable::renderWaveform()
 
 void MipMappedWaveTable::generateMipMap()
 {
-  static double spectrum[tableLength];
-  //static int    position, offset;
-  static int t, i; // indices for the table and position
+  double spectrum[tableLength];
+  int t, i; // indices for the table and position
 
   //position = 0;             // begin of the 1st table (index 0)
   //offset   = tableLength+4; // offset between tow tables, the 4 is the number
@@ -325,16 +324,3 @@ void MipMappedWaveTable::fillWithMoogSaw()
 
   generateMipMap();
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

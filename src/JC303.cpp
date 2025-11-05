@@ -31,7 +31,7 @@ JC303::JC303()
                                                         "Resonance",
                                                         0.0f,
                                                         1.0f,
-                                                        0.0f),
+                                                        0.92f),
             std::make_unique<juce::AudioParameterFloat> ("envmod",
                                                         "EnvMod",
                                                         0.0f,
@@ -41,17 +41,17 @@ JC303::JC303()
                                                         "Decay",
                                                         0.0f,
                                                         1.0f,
-                                                        0.85f),
+                                                        0.29f),
             std::make_unique<juce::AudioParameterFloat> ("accent",
                                                         "Accent",
                                                         0.0f,
                                                         1.0f,
-                                                        0.5f),
+                                                        0.78f),
             std::make_unique<juce::AudioParameterFloat> ("volume",
                                                         "Volume",
                                                         0.0f,
                                                         1.0f,
-                                                        0.85f),
+                                                        0.75f),
             // MODs parameters
             std::make_unique<juce::AudioParameterFloat> ("normalDecay",
                                                         "Normal Decay",
@@ -62,22 +62,22 @@ JC303::JC303()
                                                         "Accent Decay",
                                                         0.0f,
                                                         1.0f,
-                                                        0.1f),
+                                                        0.03f),
             std::make_unique<juce::AudioParameterFloat> ("feedbackFilter",
                                                         "Filt. FeedBack",
                                                         0.0f,
                                                         1.0f,
-                                                        0.54f),
+                                                        0.63f),
             std::make_unique<juce::AudioParameterFloat> ("softAttack",
                                                         "Soft Attack",
                                                         0.0f,
                                                         1.0f,
-                                                        0.1f),
+                                                        0.26f),
             std::make_unique<juce::AudioParameterFloat> ("slideTime",
                                                         "Slide time",
                                                         0.0f,
                                                         1.0f,
-                                                        0.55f),
+                                                        0.33f),
             std::make_unique<juce::AudioParameterFloat> ("sqrDriver",
                                                         "Square Driver",
                                                         0.0f,
@@ -101,7 +101,7 @@ JC303::JC303()
                                                         "Dry/Wet",
                                                         0.0f,
                                                         1.0f,
-                                                        0.5f),
+                                                        0.25f),
             std::make_unique<juce::AudioParameterBool> ("switchOverdriveState",
                                                         "Switch Overdrive Mod",
                                                         false)
@@ -352,7 +352,7 @@ void JC303::setParameter (Open303Parameters index, float value)
     case FEEDBACK_HPF:
         // this one is expresive only on higher reesonances
         open303Core.setFeedbackHighpass(
-            //linToExp(value, 0.0, 1.0,  350.0,    10.0)
+            //linToExp(value, 0.0, 1.0,  10.0,    500.0)
             linToExp(value, 0.0, 1.0,  350.0,    100.0)
         );
         break;
@@ -380,6 +380,7 @@ void JC303::setParameter (Open303Parameters index, float value)
         open303Core.setTanhShaperDrive(
             //linToLin(value, 0.0, 1.0,   0.0,     60.0)
             linToLin(value, 0.0, 1.0,   25.0,     80.0)
+            //linToLin(value, 0.0, 1.0,   36.9,     90.0)
         );
         break;
 	}
@@ -407,13 +408,13 @@ void JC303::setDevilMod(bool mode)
         decayMin = 200.0;
         decayMax = 2000.0;
         // NORMAL_DECAY
-        open303Core.setAmpDecay(1230.0); // ampEnv.setDecay(1230.0);
+        open303Core.setAmpDecay(1230.0);
         // ACCENT_DECAY
-        open303Core.setAccentDecay(200.0); // 200.0
+        open303Core.setAccentDecay(200.0);
         // FEEDBACK_HPF
-        open303Core.setFeedbackHighpass(150.0); // filter.setFeedbackHighpassCutoff(150.0);
+        open303Core.setFeedbackHighpass(150.0);
         // SOFT_ATTACK
-        open303Core.setNormalAttack(3.0); // 3.0;
+        open303Core.setNormalAttack(3.0);
         // SLIDE_TIME
         open303Core.setSlideTime(60.0); // 60.0;
         // TANH_SHAPER_DRIVE
@@ -546,19 +547,28 @@ void JC303::processBlock (juce::AudioBuffer<float>& buffer,
 {
     juce::ScopedNoDenormals noDenormals;
     auto currentSample = 0;
-
+    const auto numSamples = buffer.getNumSamples();
+    
     // clear buffer
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-        buffer.clear (i, 0, buffer.getNumSamples());
+        buffer.clear (i, 0, numSamples);
 
-    // handle midi note messages
+    // handle MIDI messages
     for (const auto midiMetadata : midiMessages)
     {
         const auto message = midiMetadata.getMessage();
-        const auto messagePosition = static_cast<int>(message.getTimeStamp());
+        const auto samplePosition = midiMetadata.samplePosition;
+        
+        // validate sample position
+        if (samplePosition < currentSample || samplePosition >= numSamples)
+            continue;
 
+        // render audio up to this MIDI event
+        render303(buffer, currentSample, samplePosition);
+
+        // process MIDI event
         if (message.isNoteOn())
         {
             open303Core.noteOn(message.getNoteNumber(), message.getVelocity(), 0);
@@ -569,20 +579,15 @@ void JC303::processBlock (juce::AudioBuffer<float>& buffer,
         }
         else if (message.isAllNotesOff())
         {
-            for(int i=0; i <= 127; i++) {
+            for (int i = 0; i <= 127; i++)
                 open303Core.noteOn(i, 0, 0);
-            }
-        } else {
-            continue;
         }
 
-        // render open303
-        render303(buffer, currentSample, messagePosition);
-        currentSample = messagePosition;
+        currentSample = samplePosition;
     }
 
-    // render open303
-    render303(buffer, currentSample, buffer.getNumSamples());
+    // render remaining samples
+    render303(buffer, currentSample, numSamples);
 
     // render GuitarML overdrive
     if (*switchOverdriveState) {
@@ -596,7 +601,7 @@ void JC303::processBlock (juce::AudioBuffer<float>& buffer,
 
     // copy mono channel to stereo
     for (int ch = 1; ch < buffer.getNumChannels(); ++ch)
-        buffer.copyFrom(ch, 0, buffer, 0, 0, buffer.getNumSamples());
+        buffer.copyFrom(ch, 0, buffer, 0, 0, numSamples);
 }
 
 int JC303::loadOverdriveTones()
