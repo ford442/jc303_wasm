@@ -19,7 +19,7 @@ Open303::Open303()
   normalAttack     =     3.0;
   accentAttack     =     3.0;
   normalDecay      =  1000.0;
-  accentDecay      =   119.1;
+  accentDecay      =   200.0;
   normalAmpRelease =     1.0;
   accentAmpRelease =    50.0;
   accentGain       =     0.0;
@@ -41,7 +41,7 @@ Open303::Open303()
   mainEnv.setNormalizeSum(false);
 
   ampEnv.setAttack(0.0);
-  ampEnv.setDecay(921.0);
+  ampEnv.setDecay(1230.0);
   ampEnv.setSustainLevel(0.0);
   ampEnv.setRelease(0.5);
   ampEnv.setTauScale(1.0);
@@ -70,7 +70,7 @@ Open303::Open303()
   notch.setFrequency(7.5164);
   notch.setBandwidth(4.7);
 
-  filter.setFeedbackHighpassCutoff(100.0);
+  filter.setFeedbackHighpassCutoff(150.0);
 }
 
 Open303::~Open303()

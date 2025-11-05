@@ -82,7 +82,7 @@ JC303::JC303()
                                                         "Square Driver",
                                                         0.0f,
                                                         1.0f,
-                                                        0.27f),
+                                                        0.25f),
             std::make_unique<juce::AudioParameterBool> ("switchModState",
                                                         "Switch Mod",
                                                         false),
@@ -353,7 +353,7 @@ void JC303::setParameter (Open303Parameters index, float value)
         // this one is expresive only on higher reesonances
         open303Core.setFeedbackHighpass(
             //linToExp(value, 0.0, 1.0,  10.0,    500.0)
-            linToExp(value, 0.0, 1.0,  350.0,    50.0)
+            linToExp(value, 0.0, 1.0,  350.0,    100.0)
         );
         break;
     case SOFT_ATTACK:
@@ -408,13 +408,13 @@ void JC303::setDevilMod(bool mode)
         decayMin = 200.0;
         decayMax = 2000.0;
         // NORMAL_DECAY
-        open303Core.setAmpDecay(921.0); // ampEnv.setDecay(1230.0);
+        open303Core.setAmpDecay(1230.0);
         // ACCENT_DECAY
-        open303Core.setAccentDecay(119.1); // 200.0
+        open303Core.setAccentDecay(200.0);
         // FEEDBACK_HPF
-        open303Core.setFeedbackHighpass(100.0); // filter.setFeedbackHighpassCutoff(150.0);
+        open303Core.setFeedbackHighpass(150.0);
         // SOFT_ATTACK
-        open303Core.setNormalAttack(0.0); // 3.0;
+        open303Core.setNormalAttack(3.0);
         // SLIDE_TIME
         open303Core.setSlideTime(60.0); // 60.0;
         // TANH_SHAPER_DRIVE
