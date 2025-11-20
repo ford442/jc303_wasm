@@ -134,7 +134,6 @@ RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
     echo "export PKG_CONFIG_LIBDIR=/usr/lib/x86_64-linux-gnu/pkgconfig" >> /etc/bash.bashrc; \
     else \
     echo "export CROSS_AMD64=0" >> /etc/bash.bashrc; \
-    echo "export PKG_CONFIG_LIBDIR=/usr/lib/x86_64-linux-gnu/pkgconfig" >> /etc/bash.bashrc; \
     fi
 
 # ------------------------------------------------------------
