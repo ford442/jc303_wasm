@@ -58,39 +58,74 @@ include(cmake/ConfigFlags.cmake)
 include(cmake/RuntimeSIMDLib.cmake)
 
 # AVX/SSE files for accelerated neural nets and other DSP
-make_lib_simd_runtime(dsp_accelerated
-    SOURCES
+if(EMSCRIPTEN)
+    # WebAssembly Build: Single target, no runtime dispatch
+    # We use a standard static library. Emscripten handles SIMD compilation
+    # via toolchain flags (e.g. -msimd128) if enabled.
+    add_library(dsp_accelerated STATIC
         processors/drive/neural_utils/RNNAccelerated.cpp
-        #processors/other/poly_octave/PolyOctaveV2FilterBankImpl.cpp
-)
-foreach(target IN ITEMS dsp_accelerated_sse_or_arm dsp_accelerated_avx)
-    target_link_libraries(${target}
-        PRIVATE
-            math_approx
-            config_flags
-            juce::juce_recommended_lto_flags
-            warning_flags
     )
-    target_include_directories(${target}
+
+    # Link dependencies using the correct project names
+    target_link_libraries(dsp_accelerated
+        PUBLIC
+            rtneural
+            chowdsp::chowdsp_json
+            math_approx
+    )
+
+    # Add includes manually as done in the desktop build
+    target_include_directories(dsp_accelerated
         PRIVATE
             "${CMAKE_CURRENT_SOURCE_DIR}"
             ${rtneural_SOURCE_DIR}
             ${rtneural_SOURCE_DIR}/modules/xsimd/include
     )
-    target_compile_definitions(${target}
-        PRIVATE
+
+    # Compile definitions for Wasm (Standard alignment, Custom namespace to avoid clashes)
+    target_compile_definitions(dsp_accelerated
+        PUBLIC
             RTNEURAL_USE_XSIMD=1
+            RTNEURAL_DEFAULT_ALIGNMENT=16
+            RTNEURAL_NAMESPACE=RTNeural_wasm
             _USE_MATH_DEFINES=1
     )
-    set_target_properties(${target} PROPERTIES
-        POSITION_INDEPENDENT_CODE TRUE
-        VISIBILITY_INLINES_HIDDEN TRUE
-        C_VISIBILITY_PRESET hidden
-        CXX_VISIBILITY_PRESET hidden
+
+else()
+    make_lib_simd_runtime(dsp_accelerated
+        SOURCES
+            processors/drive/neural_utils/RNNAccelerated.cpp
+            #processors/other/poly_octave/PolyOctaveV2FilterBankImpl.cpp
     )
-endforeach()
-target_compile_definitions(dsp_accelerated_sse_or_arm PRIVATE RTNEURAL_DEFAULT_ALIGNMENT=16 RTNEURAL_NAMESPACE=RTNeural_sse_arm)
-target_compile_definitions(dsp_accelerated_avx PRIVATE RTNEURAL_DEFAULT_ALIGNMENT=32 RTNEURAL_NAMESPACE=RTNeural_avx)
+    foreach(target IN ITEMS dsp_accelerated_sse_or_arm dsp_accelerated_avx)
+        target_link_libraries(${target}
+            PRIVATE
+                math_approx
+                config_flags
+                juce::juce_recommended_lto_flags
+                warning_flags
+        )
+        target_include_directories(${target}
+            PRIVATE
+                "${CMAKE_CURRENT_SOURCE_DIR}"
+                ${rtneural_SOURCE_DIR}
+                ${rtneural_SOURCE_DIR}/modules/xsimd/include
+        )
+        target_compile_definitions(${target}
+            PRIVATE
+                RTNEURAL_USE_XSIMD=1
+                _USE_MATH_DEFINES=1
+        )
+        set_target_properties(${target} PROPERTIES
+            POSITION_INDEPENDENT_CODE TRUE
+            VISIBILITY_INLINES_HIDDEN TRUE
+            C_VISIBILITY_PRESET hidden
+            CXX_VISIBILITY_PRESET hidden
+        )
+    endforeach()
+    target_compile_definitions(dsp_accelerated_sse_or_arm PRIVATE RTNEURAL_DEFAULT_ALIGNMENT=16 RTNEURAL_NAMESPACE=RTNeural_sse_arm)
+    target_compile_definitions(dsp_accelerated_avx PRIVATE RTNEURAL_DEFAULT_ALIGNMENT=32 RTNEURAL_NAMESPACE=RTNeural_avx)
+endif()
 #target_link_libraries("${PROJECT_NAME}" PRIVATE dsp_accelerated)
 
 target_link_libraries("${PROJECT_NAME}" 
