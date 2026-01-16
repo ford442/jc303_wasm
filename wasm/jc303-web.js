@@ -4,6 +4,12 @@
  * This JavaScript module provides a high-level API for using the JC-303
  * WASM synthesizer in a browser environment with the Web Audio API.
  * 
+ * Usage:
+ * 1. Load jc303.js (Emscripten-generated) before this file
+ * 2. Create instance: const synth = new JC303();
+ * 3. Initialize: await synth.init();
+ * 4. Play notes: synth.noteOn(60, 100);
+ * 
  * Licensed under GPL-3.0
  */
 
@@ -46,6 +52,11 @@ class JC303 {
      */
     async init(audioContext = null) {
         try {
+            // Check if JC303Module is available (loaded from jc303.js)
+            if (typeof JC303Module === 'undefined') {
+                throw new Error('JC303Module not found. Make sure jc303.js is loaded before jc303-web.js');
+            }
+            
             // Create or use provided AudioContext
             if (audioContext) {
                 this.audioContext = audioContext;
@@ -53,8 +64,7 @@ class JC303 {
                 this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
             }
             
-            // Load the WASM module
-            const wasmPath = this.getWasmPath();
+            // Load the WASM module (JC303Module is defined in the Emscripten-generated jc303.js)
             this.wasmModule = await JC303Module();
             
             // Initialize the synthesizer

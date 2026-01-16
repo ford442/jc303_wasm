@@ -18,6 +18,10 @@ class JC303Processor extends AudioWorkletProcessor {
         this.wasmModule = null;
         this.outputBufferPtr = null;
         
+        // Cached WASM memory view for performance
+        this.cachedMemoryBuffer = null;
+        this.cachedMemoryView = null;
+        
         // Queue for MIDI events and parameter changes
         this.messageQueue = [];
         
@@ -154,13 +158,24 @@ class JC303Processor extends AudioWorkletProcessor {
         const bufferPtr = this.wasmModule.process(numSamples);
         
         if (bufferPtr) {
-            // Copy samples from WASM memory to output buffer
-            const wasmMemory = new Float32Array(
-                this.wasmModule.HEAPF32.buffer,
-                bufferPtr,
-                numSamples
-            );
-            channel.set(wasmMemory);
+            // Check if WASM memory buffer has changed (can happen on memory growth)
+            // Only recreate the view when necessary for better performance
+            const currentBuffer = this.wasmModule.HEAPF32.buffer;
+            if (this.cachedMemoryBuffer !== currentBuffer) {
+                this.cachedMemoryBuffer = currentBuffer;
+                this.cachedMemoryView = null; // Force recreation
+            }
+            
+            // Create or reuse memory view
+            if (!this.cachedMemoryView || this.cachedMemoryView.length !== numSamples) {
+                this.cachedMemoryView = new Float32Array(
+                    currentBuffer,
+                    bufferPtr,
+                    numSamples
+                );
+            }
+            
+            channel.set(this.cachedMemoryView);
             
             // Copy to all output channels (mono to stereo)
             for (let ch = 1; ch < output.length; ch++) {

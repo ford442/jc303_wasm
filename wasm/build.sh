@@ -63,9 +63,10 @@ fi
 
 emcmake cmake .. -DCMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}"
 
-# Build
+# Build with appropriate parallelism
 echo -e "${YELLOW}Building...${NC}"
-emmake make -j$(nproc 2>/dev/null || echo 4)
+NPROC=$(getconf _NPROCESSORS_ONLN 2>/dev/null || nproc 2>/dev/null || echo 2)
+emmake make -j"${NPROC}"
 
 # Create distribution directory
 echo -e "${YELLOW}Creating distribution package...${NC}"

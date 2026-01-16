@@ -37,6 +37,16 @@ static const ParameterRange PARAM_TUNING = {400.0, 480.0};
 static const ParameterRange PARAM_DECAY_NORMAL = {200.0, 2000.0};
 static const ParameterRange PARAM_DECAY_MOD = {30.0, 3000.0};
 
+// Default parameter values (matching JC303.cpp defaults)
+static const double DEFAULT_WAVEFORM = 1.0;      // Square wave
+static const double DEFAULT_TUNING = 0.5;        // 440 Hz (centered)
+static const double DEFAULT_CUTOFF = 0.0;        // Minimum cutoff
+static const double DEFAULT_RESONANCE = 0.92;    // 92%
+static const double DEFAULT_ENVMOD = 0.0;        // No modulation
+static const double DEFAULT_DECAY = 0.29;        // 29%
+static const double DEFAULT_ACCENT = 0.78;       // 78%
+static const double DEFAULT_VOLUME = 0.75;       // 75%
+
 // Utility functions for parameter mapping
 static double linToLin(double in, double inMin, double inMax, double outMin, double outMax) {
     double tmp = (in - inMin) / (inMax - inMin);
@@ -76,14 +86,14 @@ int jc303_init(double sampleRate, int bufferSize) {
     g_bufferSize = bufferSize;
     
     // Set default parameters (matching JC303.cpp defaults)
-    g_synth->setWaveform(1.0);  // Square wave
-    g_synth->setTuning(440.0);
-    g_synth->setCutoff(314.0);
-    g_synth->setResonance(92.0);
-    g_synth->setEnvMod(0.0);
-    g_synth->setDecay(linToExp(0.29, 0.0, 1.0, 200.0, 2000.0));
-    g_synth->setAccent(78.0);
-    g_synth->setVolume(-3.0);  // -60 to 0 dB range
+    g_synth->setWaveform(DEFAULT_WAVEFORM);
+    g_synth->setTuning(linToLin(DEFAULT_TUNING, 0.0, 1.0, PARAM_TUNING.min, PARAM_TUNING.max));
+    g_synth->setCutoff(linToExp(DEFAULT_CUTOFF, 0.0, 1.0, PARAM_CUTOFF.min, PARAM_CUTOFF.max));
+    g_synth->setResonance(DEFAULT_RESONANCE * 100.0);
+    g_synth->setEnvMod(DEFAULT_ENVMOD * 100.0);
+    g_synth->setDecay(linToExp(DEFAULT_DECAY, 0.0, 1.0, PARAM_DECAY_NORMAL.min, PARAM_DECAY_NORMAL.max));
+    g_synth->setAccent(DEFAULT_ACCENT * 100.0);
+    g_synth->setVolume(linToLin(DEFAULT_VOLUME, 0.0, 1.0, -60.0, 0.0));
     
     // Set original TB-303 values for mod parameters
     g_synth->setAmpDecay(1230.0);
@@ -297,10 +307,12 @@ void jc303_setAccentDecay(float value) {
 
 /**
  * Set feedback filter (mod parameter, 0.0-1.0 maps to 350-100 Hz)
+ * Note: Range is inverted (higher input = lower frequency) to match original behavior
  */
 EMSCRIPTEN_KEEPALIVE
 void jc303_setFeedbackFilter(float value) {
     if (g_synth != nullptr && g_modEnabled) {
+        // Inverted range: higher knob position = lower cutoff frequency
         g_synth->setFeedbackHighpass(linToExp(value, 0.0, 1.0, 350.0, 100.0));
     }
 }
