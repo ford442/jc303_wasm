@@ -78,11 +78,14 @@ add_subdirectory(src/gui/${GUI})
 # This setup should be done before calling `juce_add_plugin`.
 
 # do we have vst2 sdk to build it?
-if(EXISTS "${PROJECT_SOURCE_DIR}/vstsdk2.4")
+if(EMSCRIPTEN)
+    # WebAssembly only supports Standalone (which becomes the wasm module)
+    set(PLUGIN_FORMATS Standalone)
+elseif(EXISTS "${PROJECT_SOURCE_DIR}/vstsdk2.4")
     juce_set_vst2_sdk_path("${PROJECT_SOURCE_DIR}/vstsdk2.4")
-    set(PLUGIN_FORMATS AU VST VST3 LV2)
+    set(PLUGIN_FORMATS AU VST VST3 LV2 Standalone)
 else()
-    set(PLUGIN_FORMATS AU VST3 LV2)
+    set(PLUGIN_FORMATS AU VST3 LV2 Standalone)
 endif()
 
 # `juce_add_plugin` adds a static library target with the name passed as the first argument.
