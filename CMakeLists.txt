@@ -7,6 +7,13 @@ endif()
 
 project(JC303 VERSION 0.12.3)
 
+# Global Emscripten options
+if(EMSCRIPTEN)
+    # Enable SIMD128 for xsimd (used by RTNeural) and include emscripten.h for JUCE
+    add_compile_options("-msimd128" "-include" "emscripten.h")
+    add_link_options("-msimd128")
+endif()
+
 
 ### Dependency versions ###
 

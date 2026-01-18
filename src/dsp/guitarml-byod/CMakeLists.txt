@@ -31,6 +31,7 @@ FetchContent_Declare(rtneural
     GIT_TAG        ${LIB_RTNEURAL_TAG}
     GIT_CONFIG     advice.detachedHead=false)
 set(RTNEURAL_XSIMD ON CACHE BOOL "Use RTNeural with XSIMD backend" FORCE)
+set(RTNEURAL_WITH_JUCE OFF CACHE BOOL "Disable RTNeural JUCE integration" FORCE)
 
 # chowdsp math_approx fetch
 FetchContent_Declare(math_approx
