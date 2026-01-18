@@ -31,6 +31,7 @@ FetchContent_Declare(rtneural
     GIT_TAG        ${LIB_RTNEURAL_TAG}
     GIT_CONFIG     advice.detachedHead=false)
 set(RTNEURAL_XSIMD ON CACHE BOOL "Use RTNeural with XSIMD backend" FORCE)
+set(RTNEURAL_WITH_JUCE OFF CACHE BOOL "Disable RTNeural JUCE integration" FORCE)
 
 # chowdsp math_approx fetch
 FetchContent_Declare(math_approx
@@ -65,6 +66,10 @@ if(EMSCRIPTEN)
     add_library(dsp_accelerated STATIC
         processors/drive/neural_utils/RNNAccelerated.cpp
     )
+
+    # Enable SIMD128 and fix missing emscripten header
+    target_compile_options(dsp_accelerated PUBLIC -msimd128 -include emscripten.h)
+    target_link_options(dsp_accelerated PUBLIC -msimd128)
 
     # Link dependencies using the correct project names
     target_link_libraries(dsp_accelerated
