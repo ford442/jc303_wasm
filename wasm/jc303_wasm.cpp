@@ -47,17 +47,6 @@ static const double DEFAULT_DECAY = 0.29;        // 29%
 static const double DEFAULT_ACCENT = 0.78;       // 78%
 static const double DEFAULT_VOLUME = 0.75;       // 75%
 
-// Utility functions for parameter mapping
-static double linToLin(double in, double inMin, double inMax, double outMin, double outMax) {
-    double tmp = (in - inMin) / (inMax - inMin);
-    return outMin + tmp * (outMax - outMin);
-}
-
-static double linToExp(double in, double inMin, double inMax, double outMin, double outMax) {
-    double tmp = (in - inMin) / (inMax - inMin);
-    return outMin * exp(tmp * log(outMax / outMin));
-}
-
 // Current mod state for extended decay range
 static bool g_modEnabled = false;
 
@@ -131,23 +120,18 @@ void jc303_cleanup() {
  */
 EMSCRIPTEN_KEEPALIVE
 float* jc303_process(int numSamples) {
-    if (g_synth == nullptr || g_outputBuffer == nullptr) {
+    if (g_synth == nullptr) {
         return nullptr;
     }
     
-    // Ensure buffer is large enough
-    if (numSamples > g_bufferSize) {
-        delete[] g_outputBuffer;
-        g_outputBuffer = new float[numSamples];
-        g_bufferSize = numSamples;
-    }
+    float* outputBuffer = new float[numSamples];
     
     // Generate audio samples
     for (int i = 0; i < numSamples; i++) {
-        g_outputBuffer[i] = static_cast<float>(g_synth->getSample());
+        outputBuffer[i] = static_cast<float>(g_synth->getSample());
     }
     
-    return g_outputBuffer;
+    return outputBuffer;
 }
 
 /**
@@ -379,7 +363,6 @@ int jc303_getBufferSize() {
 EMSCRIPTEN_BINDINGS(jc303_module) {
     emscripten::function("init", &jc303_init);
     emscripten::function("cleanup", &jc303_cleanup);
-    emscripten::function("process", &jc303_process, emscripten::allow_raw_pointers());
     emscripten::function("noteOn", &jc303_noteOn);
     emscripten::function("noteOff", &jc303_noteOff);
     emscripten::function("allNotesOff", &jc303_allNotesOff);
@@ -399,6 +382,5 @@ EMSCRIPTEN_BINDINGS(jc303_module) {
     emscripten::function("setSlideTime", &jc303_setSlideTime);
     emscripten::function("setSquareDriver", &jc303_setSquareDriver);
     emscripten::function("setPitchBend", &jc303_setPitchBend);
-    emscripten::function("getOutputBuffer", &jc303_getOutputBuffer, emscripten::allow_raw_pointers());
     emscripten::function("getBufferSize", &jc303_getBufferSize);
 }

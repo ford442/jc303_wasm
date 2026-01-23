@@ -66,10 +66,21 @@ class JC303 {
             
             // Load the WASM module (JC303Module is defined in the Emscripten-generated jc303.js)
             this.wasmModule = await JC303Module();
+
+            // Ensure HEAPF32 exists on the returned module even if not exported by the build
+            // (some builds don't include HEAP views in EXPORTED_RUNTIME_METHODS). Provide
+            // a getter that returns a fresh view over the WebAssembly memory buffer so
+            // callers can use `module.HEAPF32.buffer` as expected.
+            if (typeof this.wasmModule.HEAPF32 === 'undefined' && this.wasmModule.memory) {
+                Object.defineProperty(this.wasmModule, 'HEAPF32', {
+                    configurable: true,
+                    get: function() { return new Float32Array(this.memory.buffer); }
+                });
+            }
             
             // Initialize the synthesizer
             const bufferSize = 256;
-            const success = this.wasmModule.init(this.audioContext.sampleRate, bufferSize);
+            const success = this.wasmModule.ccall('jc303_init', 'number', ['number','number'], [this.audioContext.sampleRate, bufferSize]);
             
             if (!success) {
                 throw new Error('Failed to initialize WASM synthesizer');
@@ -121,9 +132,9 @@ class JC303 {
             const outputBuffer = event.outputBuffer;
             const numSamples = outputBuffer.length;
             
-            // Generate samples using WASM
-            const bufferPtr = this.wasmModule.process(numSamples);
-            
+            // Generate samples using WASM; call the exported C function directly via ccall
+            const bufferPtr = this.wasmModule.ccall('jc303_process', 'number', ['number'], [numSamples]);
+
             if (bufferPtr) {
                 // Get the WASM memory view
                 const wasmBuffer = new Float32Array(
@@ -131,7 +142,7 @@ class JC303 {
                     bufferPtr,
                     numSamples
                 );
-                
+
                 // Copy to output channels
                 for (let channel = 0; channel < outputBuffer.numberOfChannels; channel++) {
                     const channelData = outputBuffer.getChannelData(channel);
@@ -156,23 +167,23 @@ class JC303 {
     applyAllParameters() {
         if (!this.wasmModule) return;
         
-        this.wasmModule.setWaveform(this.parameters.waveform);
-        this.wasmModule.setTuning(this.parameters.tuning);
-        this.wasmModule.setCutoff(this.parameters.cutoff);
-        this.wasmModule.setResonance(this.parameters.resonance);
-        this.wasmModule.setEnvMod(this.parameters.envmod);
-        this.wasmModule.setDecay(this.parameters.decay);
-        this.wasmModule.setAccent(this.parameters.accent);
-        this.wasmModule.setVolume(this.parameters.volume);
-        this.wasmModule.setModEnabled(this.parameters.modEnabled ? 1 : 0);
+        this.wasmModule.ccall('jc303_setWaveform', 'void', ['number'], [this.parameters.waveform]);
+        this.wasmModule.ccall('jc303_setTuning', 'void', ['number'], [this.parameters.tuning]);
+        this.wasmModule.ccall('jc303_setCutoff', 'void', ['number'], [this.parameters.cutoff]);
+        this.wasmModule.ccall('jc303_setResonance', 'void', ['number'], [this.parameters.resonance]);
+        this.wasmModule.ccall('jc303_setEnvMod', 'void', ['number'], [this.parameters.envmod]);
+        this.wasmModule.ccall('jc303_setDecay', 'void', ['number'], [this.parameters.decay]);
+        this.wasmModule.ccall('jc303_setAccent', 'void', ['number'], [this.parameters.accent]);
+        this.wasmModule.ccall('jc303_setVolume', 'void', ['number'], [this.parameters.volume]);
+        this.wasmModule.ccall('jc303_setModEnabled', 'void', ['number'], [this.parameters.modEnabled ? 1 : 0]);
         
         if (this.parameters.modEnabled) {
-            this.wasmModule.setNormalDecay(this.parameters.normalDecay);
-            this.wasmModule.setAccentDecay(this.parameters.accentDecay);
-            this.wasmModule.setFeedbackFilter(this.parameters.feedbackFilter);
-            this.wasmModule.setSoftAttack(this.parameters.softAttack);
-            this.wasmModule.setSlideTime(this.parameters.slideTime);
-            this.wasmModule.setSquareDriver(this.parameters.squareDriver);
+            this.wasmModule.ccall('jc303_setNormalDecay', 'void', ['number'], [this.parameters.normalDecay]);
+            this.wasmModule.ccall('jc303_setAccentDecay', 'void', ['number'], [this.parameters.accentDecay]);
+            this.wasmModule.ccall('jc303_setFeedbackFilter', 'void', ['number'], [this.parameters.feedbackFilter]);
+            this.wasmModule.ccall('jc303_setSoftAttack', 'void', ['number'], [this.parameters.softAttack]);
+            this.wasmModule.ccall('jc303_setSlideTime', 'void', ['number'], [this.parameters.slideTime]);
+            this.wasmModule.ccall('jc303_setSquareDriver', 'void', ['number'], [this.parameters.squareDriver]);
         }
     }
     
@@ -187,7 +198,7 @@ class JC303 {
         if (!this.isReady) return;
         
         this.resume();
-        this.wasmModule.noteOn(note, velocity);
+        this.wasmModule.ccall('jc303_noteOn', 'void', ['number','number'], [note, velocity]);
         this.activeNotes.add(note);
     }
     
@@ -198,7 +209,7 @@ class JC303 {
     noteOff(note) {
         if (!this.isReady) return;
         
-        this.wasmModule.noteOff(note);
+        this.wasmModule.ccall('jc303_noteOff', 'void', ['number'], [note]);
         this.activeNotes.delete(note);
     }
     
@@ -208,7 +219,7 @@ class JC303 {
     allNotesOff() {
         if (!this.isReady) return;
         
-        this.wasmModule.allNotesOff();
+        this.wasmModule.ccall('jc303_allNotesOff', 'void', [], []);
         this.activeNotes.clear();
     }
     
@@ -219,7 +230,7 @@ class JC303 {
      */
     setWaveform(value) {
         this.parameters.waveform = Math.max(0, Math.min(1, value));
-        if (this.wasmModule) this.wasmModule.setWaveform(this.parameters.waveform);
+        if (this.wasmModule) this.wasmModule.ccall('jc303_setWaveform', 'void', ['number'], [this.parameters.waveform]);
     }
     
     /**
@@ -227,7 +238,7 @@ class JC303 {
      */
     setTuning(value) {
         this.parameters.tuning = Math.max(0, Math.min(1, value));
-        if (this.wasmModule) this.wasmModule.setTuning(this.parameters.tuning);
+        if (this.wasmModule) this.wasmModule.ccall('jc303_setTuning', 'void', ['number'], [this.parameters.tuning]);
     }
     
     /**
@@ -235,7 +246,7 @@ class JC303 {
      */
     setCutoff(value) {
         this.parameters.cutoff = Math.max(0, Math.min(1, value));
-        if (this.wasmModule) this.wasmModule.setCutoff(this.parameters.cutoff);
+        if (this.wasmModule) this.wasmModule.ccall('jc303_setCutoff', 'void', ['number'], [this.parameters.cutoff]);
     }
     
     /**
@@ -243,7 +254,7 @@ class JC303 {
      */
     setResonance(value) {
         this.parameters.resonance = Math.max(0, Math.min(1, value));
-        if (this.wasmModule) this.wasmModule.setResonance(this.parameters.resonance);
+        if (this.wasmModule) this.wasmModule.ccall('jc303_setResonance', 'void', ['number'], [this.parameters.resonance]);
     }
     
     /**
@@ -251,7 +262,7 @@ class JC303 {
      */
     setEnvMod(value) {
         this.parameters.envmod = Math.max(0, Math.min(1, value));
-        if (this.wasmModule) this.wasmModule.setEnvMod(this.parameters.envmod);
+        if (this.wasmModule) this.wasmModule.ccall('jc303_setEnvMod', 'void', ['number'], [this.parameters.envmod]);
     }
     
     /**
@@ -259,7 +270,7 @@ class JC303 {
      */
     setDecay(value) {
         this.parameters.decay = Math.max(0, Math.min(1, value));
-        if (this.wasmModule) this.wasmModule.setDecay(this.parameters.decay);
+        if (this.wasmModule) this.wasmModule.ccall('jc303_setDecay', 'void', ['number'], [this.parameters.decay]);
     }
     
     /**
@@ -267,7 +278,7 @@ class JC303 {
      */
     setAccent(value) {
         this.parameters.accent = Math.max(0, Math.min(1, value));
-        if (this.wasmModule) this.wasmModule.setAccent(this.parameters.accent);
+        if (this.wasmModule) this.wasmModule.ccall('jc303_setAccent', 'void', ['number'], [this.parameters.accent]);
     }
     
     /**
@@ -275,7 +286,7 @@ class JC303 {
      */
     setVolume(value) {
         this.parameters.volume = Math.max(0, Math.min(1, value));
-        if (this.wasmModule) this.wasmModule.setVolume(this.parameters.volume);
+        if (this.wasmModule) this.wasmModule.ccall('jc303_setVolume', 'void', ['number'], [this.parameters.volume]);
     }
     
     /**
@@ -284,15 +295,15 @@ class JC303 {
     setModEnabled(enabled) {
         this.parameters.modEnabled = enabled;
         if (this.wasmModule) {
-            this.wasmModule.setModEnabled(enabled ? 1 : 0);
+            this.wasmModule.ccall('jc303_setModEnabled', 'void', ['number'], [enabled ? 1 : 0]);
             if (enabled) {
                 // Apply mod parameters when enabling
-                this.wasmModule.setNormalDecay(this.parameters.normalDecay);
-                this.wasmModule.setAccentDecay(this.parameters.accentDecay);
-                this.wasmModule.setFeedbackFilter(this.parameters.feedbackFilter);
-                this.wasmModule.setSoftAttack(this.parameters.softAttack);
-                this.wasmModule.setSlideTime(this.parameters.slideTime);
-                this.wasmModule.setSquareDriver(this.parameters.squareDriver);
+                this.wasmModule.ccall('jc303_setNormalDecay', 'void', ['number'], [this.parameters.normalDecay]);
+                this.wasmModule.ccall('jc303_setAccentDecay', 'void', ['number'], [this.parameters.accentDecay]);
+                this.wasmModule.ccall('jc303_setFeedbackFilter', 'void', ['number'], [this.parameters.feedbackFilter]);
+                this.wasmModule.ccall('jc303_setSoftAttack', 'void', ['number'], [this.parameters.softAttack]);
+                this.wasmModule.ccall('jc303_setSlideTime', 'void', ['number'], [this.parameters.slideTime]);
+                this.wasmModule.ccall('jc303_setSquareDriver', 'void', ['number'], [this.parameters.squareDriver]);
             }
         }
     }
@@ -302,42 +313,42 @@ class JC303 {
     setNormalDecay(value) {
         this.parameters.normalDecay = Math.max(0, Math.min(1, value));
         if (this.wasmModule && this.parameters.modEnabled) {
-            this.wasmModule.setNormalDecay(this.parameters.normalDecay);
+            this.wasmModule.ccall('jc303_setNormalDecay', 'void', ['number'], [this.parameters.normalDecay]);
         }
     }
     
     setAccentDecay(value) {
         this.parameters.accentDecay = Math.max(0, Math.min(1, value));
         if (this.wasmModule && this.parameters.modEnabled) {
-            this.wasmModule.setAccentDecay(this.parameters.accentDecay);
+            this.wasmModule.ccall('jc303_setAccentDecay', 'void', ['number'], [this.parameters.accentDecay]);
         }
     }
     
     setFeedbackFilter(value) {
         this.parameters.feedbackFilter = Math.max(0, Math.min(1, value));
         if (this.wasmModule && this.parameters.modEnabled) {
-            this.wasmModule.setFeedbackFilter(this.parameters.feedbackFilter);
+            this.wasmModule.ccall('jc303_setFeedbackFilter', 'void', ['number'], [this.parameters.feedbackFilter]);
         }
     }
     
     setSoftAttack(value) {
         this.parameters.softAttack = Math.max(0, Math.min(1, value));
         if (this.wasmModule && this.parameters.modEnabled) {
-            this.wasmModule.setSoftAttack(this.parameters.softAttack);
+            this.wasmModule.ccall('jc303_setSoftAttack', 'void', ['number'], [this.parameters.softAttack]);
         }
     }
     
     setSlideTime(value) {
         this.parameters.slideTime = Math.max(0, Math.min(1, value));
         if (this.wasmModule && this.parameters.modEnabled) {
-            this.wasmModule.setSlideTime(this.parameters.slideTime);
+            this.wasmModule.ccall('jc303_setSlideTime', 'void', ['number'], [this.parameters.slideTime]);
         }
     }
     
     setSquareDriver(value) {
         this.parameters.squareDriver = Math.max(0, Math.min(1, value));
         if (this.wasmModule && this.parameters.modEnabled) {
-            this.wasmModule.setSquareDriver(this.parameters.squareDriver);
+            this.wasmModule.ccall('jc303_setSquareDriver', 'void', ['number'], [this.parameters.squareDriver]);
         }
     }
     
@@ -345,7 +356,7 @@ class JC303 {
      * Set pitch bend in semitones
      */
     setPitchBend(semitones) {
-        if (this.wasmModule) this.wasmModule.setPitchBend(semitones);
+        if (this.wasmModule) this.wasmModule.ccall('jc303_setPitchBend', 'void', ['number'], [semitones]);
     }
     
     // ==================== Utility ====================
@@ -386,7 +397,7 @@ class JC303 {
         }
         
         if (this.wasmModule) {
-            this.wasmModule.cleanup();
+            this.wasmModule.ccall('jc303_cleanup', 'void', [], []);
             this.wasmModule = null;
         }
         

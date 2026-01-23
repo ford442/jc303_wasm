@@ -47,64 +47,153 @@ include_directories(
 # Create the WASM executable
 add_executable(jc303 ${OPEN303_SOURCES} ${WASM_SOURCES})
 
-# Emscripten-specific compiler/linker flags
+# Option to enable extra Emscripten debug flags (SAFE_HEAP / ASSERTIONS / -g)
+option(ENABLE_WASM_DEBUG "Enable Emscripten debug flags (SAFE_HEAP/ASSERTIONS and -g)" OFF)
+
+if(ENABLE_WASM_DEBUG)
+    # Use list for proper space-separated argument handling
+    set(EMCC_LINK_FLAGS_LIST
+        -s WASM=1
+        -s MODULARIZE=1
+        -s EXPORT_NAME=JC303Module
+        -s "EXPORTED_FUNCTIONS=[\"_malloc\",\"_free\"]"
+        -s "EXPORTED_RUNTIME_METHODS=[\"ccall\",\"cwrap\",\"getValue\",\"setValue\",\"HEAPF32\"]"
+        -s ALLOW_MEMORY_GROWTH=1
+        -s INITIAL_MEMORY=16777216
+        -s STACK_SIZE=1048576
+        -s NO_EXIT_RUNTIME=1
+        -s ENVIRONMENT=web,worker
+        -s SINGLE_FILE=0
+        --bind
+        --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/early_wasm_table.js
+        --post-js ${CMAKE_CURRENT_SOURCE_DIR}/compat_wasm_imports.js
+        --post-js ${CMAKE_CURRENT_SOURCE_DIR}/safe_unbound_types.js
+        -O0
+        -g
+        -sASSERTIONS=2
+        -sSAFE_HEAP=1
+    )
+    string(REPLACE ";" " " EMCC_LINK_FLAGS "${EMCC_LINK_FLAGS_LIST}")
+    
+    set(EMCC_COMPILE_OPTIONS
+        -O0
+        -g
+        -fno-exceptions
+        -fno-rtti
+        -DEMSCRIPTEN_HAS_UNBOUND_TYPE_NAMES=0
+    )
+else()
+    # Use list for proper space-separated argument handling
+    set(EMCC_LINK_FLAGS_LIST
+        -s WASM=1
+        -s MODULARIZE=1
+        -s EXPORT_NAME=JC303Module
+        -s "EXPORTED_FUNCTIONS=[\"_malloc\",\"_free\"]"
+        -s "EXPORTED_RUNTIME_METHODS=[\"ccall\",\"cwrap\",\"getValue\",\"setValue\",\"HEAPF32\"]"
+        -s ALLOW_MEMORY_GROWTH=1
+        -s INITIAL_MEMORY=16777216
+        -s STACK_SIZE=1048576
+        -s NO_EXIT_RUNTIME=1
+        -s ENVIRONMENT=web,worker
+        -s SINGLE_FILE=0
+        --bind
+        --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/early_wasm_table.js
+        --post-js ${CMAKE_CURRENT_SOURCE_DIR}/compat_wasm_imports.js
+        --post-js ${CMAKE_CURRENT_SOURCE_DIR}/safe_unbound_types.js
+        -O3
+        -flto
+    )
+    string(REPLACE ";" " " EMCC_LINK_FLAGS "${EMCC_LINK_FLAGS_LIST}")
+    
+    set(EMCC_COMPILE_OPTIONS
+        -O3
+        -flto
+        -fno-exceptions
+        -fno-rtti
+        -DEMSCRIPTEN_HAS_UNBOUND_TYPE_NAMES=0
+    )
+endif()
+
 set_target_properties(jc303 PROPERTIES
     SUFFIX ".js"
-    LINK_FLAGS "\
-        -s WASM=1 \
-        -s MODULARIZE=1 \
-        -s EXPORT_NAME='JC303Module' \
-        -s EXPORTED_FUNCTIONS='[\"_malloc\",\"_free\"]' \
-        -s EXPORTED_RUNTIME_METHODS='[\"ccall\",\"cwrap\",\"getValue\",\"setValue\"]' \
-        -s ALLOW_MEMORY_GROWTH=1 \
-        -s INITIAL_MEMORY=16777216 \
-        -s STACK_SIZE=1048576 \
-        -s NO_EXIT_RUNTIME=1 \
-        -s ENVIRONMENT='web,worker' \
-        -s SINGLE_FILE=0 \
-        --bind \
-        -O3 \
-        -flto \
-    "
+    LINK_FLAGS "${EMCC_LINK_FLAGS}"
 )
 
 # Compiler flags
-target_compile_options(jc303 PRIVATE
-    -O3
-    -flto
-    -fno-exceptions
-    -fno-rtti
-)
+target_compile_options(jc303 PRIVATE ${EMCC_COMPILE_OPTIONS})
 
 # Create a separate AudioWorklet-compatible module
 add_executable(jc303_worklet ${OPEN303_SOURCES} ${WASM_SOURCES})
 
+if(ENABLE_WASM_DEBUG)
+    # Use list for proper space-separated argument handling
+    set(EMCC_WORKLET_LINK_FLAGS_LIST
+        -s WASM=1
+        -s MODULARIZE=1
+        -s EXPORT_NAME=JC303WorkletModule
+        -s "EXPORTED_FUNCTIONS=[\"_malloc\",\"_free\"]"
+        -s "EXPORTED_RUNTIME_METHODS=[\"ccall\",\"cwrap\",\"getValue\",\"setValue\",\"HEAPF32\"]"
+        -s ALLOW_MEMORY_GROWTH=1
+        -s INITIAL_MEMORY=16777216
+        -s STACK_SIZE=1048576
+        -s NO_EXIT_RUNTIME=1
+        -s ENVIRONMENT=worker
+        -s SINGLE_FILE=1
+        --bind
+        --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/early_wasm_table.js
+        --post-js ${CMAKE_CURRENT_SOURCE_DIR}/compat_wasm_imports.js
+        -O0
+        -g
+        -sASSERTIONS=2
+        -sSAFE_HEAP=1
+    )
+    string(REPLACE ";" " " EMCC_WORKLET_LINK_FLAGS "${EMCC_WORKLET_LINK_FLAGS_LIST}")
+    
+    set(EMCC_WORKLET_COMPILE_OPTIONS
+        -O0
+        -g
+        -fno-exceptions
+        -fno-rtti
+        -DEMSCRIPTEN_HAS_UNBOUND_TYPE_NAMES=0
+    )
+else()
+    # Use list for proper space-separated argument handling
+    set(EMCC_WORKLET_LINK_FLAGS_LIST
+        -s WASM=1
+        -s MODULARIZE=1
+        -s EXPORT_NAME=JC303WorkletModule
+        -s "EXPORTED_FUNCTIONS=[\"_malloc\",\"_free\"]"
+        -s "EXPORTED_RUNTIME_METHODS=[\"ccall\",\"cwrap\",\"getValue\",\"setValue\",\"HEAPF32\"]"
+        -s ALLOW_MEMORY_GROWTH=1
+        -s INITIAL_MEMORY=16777216
+        -s STACK_SIZE=1048576
+        -s NO_EXIT_RUNTIME=1
+        -s ENVIRONMENT=worker
+        -s SINGLE_FILE=1
+        --bind
+        --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/early_wasm_table.js
+        --post-js ${CMAKE_CURRENT_SOURCE_DIR}/compat_wasm_imports.js
+        --post-js ${CMAKE_CURRENT_SOURCE_DIR}/safe_unbound_types.js
+        -O3
+        -flto
+    )
+    string(REPLACE ";" " " EMCC_WORKLET_LINK_FLAGS "${EMCC_WORKLET_LINK_FLAGS_LIST}")
+    
+    set(EMCC_WORKLET_COMPILE_OPTIONS
+        -O3
+        -flto
+        -fno-exceptions
+        -fno-rtti
+        -DEMSCRIPTEN_HAS_UNBOUND_TYPE_NAMES=0
+    )
+endif()
+
 set_target_properties(jc303_worklet PROPERTIES
     SUFFIX ".js"
-    LINK_FLAGS "\
-        -s WASM=1 \
-        -s MODULARIZE=1 \
-        -s EXPORT_NAME='JC303WorkletModule' \
-        -s EXPORTED_FUNCTIONS='[\"_malloc\",\"_free\"]' \
-        -s EXPORTED_RUNTIME_METHODS='[\"ccall\",\"cwrap\",\"getValue\",\"setValue\"]' \
-        -s ALLOW_MEMORY_GROWTH=1 \
-        -s INITIAL_MEMORY=16777216 \
-        -s STACK_SIZE=1048576 \
-        -s NO_EXIT_RUNTIME=1 \
-        -s ENVIRONMENT='worker' \
-        -s SINGLE_FILE=1 \
-        --bind \
-        -O3 \
-        -flto \
-    "
+    LINK_FLAGS "${EMCC_WORKLET_LINK_FLAGS}"
 )
 
-target_compile_options(jc303_worklet PRIVATE
-    -O3
-    -flto
-    -fno-exceptions
-    -fno-rtti
-)
+target_compile_options(jc303_worklet PRIVATE ${EMCC_WORKLET_COMPILE_OPTIONS})
 
 # Installation rules
 install(FILES

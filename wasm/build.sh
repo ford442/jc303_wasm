@@ -57,16 +57,26 @@ cd "${BUILD_DIR}"
 echo -e "${YELLOW}Configuring with CMake...${NC}"
 if [ "$BUILD_TYPE" = "debug" ]; then
     CMAKE_BUILD_TYPE="Debug"
+    echo -e "${YELLOW}Using debug flags...${NC}"
+    # Use an array to pass CMake arguments safely so that flags with spaces
+    # or embedded `=` signs are not mis-parsed by the shell/CMake.
+    cmake_args=(
+        -DCMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}"
+        -DCMAKE_CXX_FLAGS="-O0 -g -sASSERTIONS=2 -sSAFE_HEAP=1"
+        -DCMAKE_EXE_LINKER_FLAGS="-sASSERTIONS=2 -sSAFE_HEAP=1"
+    )
 else
     CMAKE_BUILD_TYPE="Release"
+    cmake_args=( -DCMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}" )
 fi
 
-emcmake cmake .. -DCMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}"
+# Run CMake with guarded args
+emcmake cmake .. "${cmake_args[@]}"
 
 # Build with appropriate parallelism
 echo -e "${YELLOW}Building...${NC}"
-NPROC=$(getconf _NPROCESSORS_ONLN 2>/dev/null || nproc 2>/dev/null || echo 2)
-emmake make -j"${NPROC}"
+NPROC=$(getconf _NPROCESSORS_ONLN 2>/dev/null || nproc 2>/dev/null || echo 4) # Use 4 cores as a safe default
+emmake make -j${NPROC}
 
 # Create distribution directory
 echo -e "${YELLOW}Creating distribution package...${NC}"
