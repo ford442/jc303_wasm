@@ -9,8 +9,9 @@ project(JC303 VERSION 0.12.3)
 
 # Global Emscripten options
 if(EMSCRIPTEN)
-    # Enable SIMD128 for xsimd (used by RTNeural) and include emscripten.h for JUCE
-    add_compile_options("-msimd128" "-include" "emscripten.h")
+    # Enable SIMD128 for xsimd (used by RTNeural)
+    # Note: -include emscripten.h is applied to project target only, not globally
+    add_compile_options("-msimd128")
     add_link_options("-msimd128")
 endif()
 
@@ -148,6 +149,11 @@ clap_juce_extensions_plugin(
 # Set the C++ language standard requirenment for the "shared code" library target.
 # Setting this to PUBLIC ensures that all dependent targets will inherit the specified C++ standard.
 target_compile_features("${PROJECT_NAME}" PUBLIC cxx_std_17)
+
+# Apply Emscripten-specific header to project target only (not JUCE dependencies)
+if(EMSCRIPTEN)
+    target_compile_options("${PROJECT_NAME}" PRIVATE "-include" "emscripten.h")
+endif()
 
 # Disable compiler extensions for the project targets (e.g. use -std=c++17 instead of -std=gnu++17).
 get_property(project_targets DIRECTORY "${PROJECT_SOURCE_DIR}" PROPERTY BUILDSYSTEM_TARGETS)
