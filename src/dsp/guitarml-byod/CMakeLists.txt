@@ -68,7 +68,7 @@ if(EMSCRIPTEN)
     )
 
     # Enable SIMD128 and fix missing emscripten header
-    target_compile_options(dsp_accelerated PUBLIC -msimd128 -include emscripten.h)
+    target_compile_options(dsp_accelerated PRIVATE -msimd128 -include emscripten.h)
     target_link_options(dsp_accelerated PUBLIC -msimd128)
 
     # Link dependencies using the correct project names
