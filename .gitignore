@@ -22,7 +22,7 @@ _codeql_detected_source_root
 # ide settings
 .vscode/
 .idea/
-
+node_modules
 # Mac extras
 .DS_Store
 
