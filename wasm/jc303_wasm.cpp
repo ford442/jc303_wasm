@@ -124,7 +124,14 @@ float* jc303_process(int numSamples) {
         return nullptr;
     }
     
-    float* outputBuffer = new float[numSamples];
+    // Use pre-allocated buffer if size matches, otherwise allocate
+    float* outputBuffer;
+    if (numSamples <= g_bufferSize && g_outputBuffer != nullptr) {
+        outputBuffer = g_outputBuffer;
+    } else {
+        // Fallback: allocate (should be rare, caller must free)
+        outputBuffer = new float[numSamples];
+    }
     
     // Generate audio samples
     for (int i = 0; i < numSamples; i++) {
