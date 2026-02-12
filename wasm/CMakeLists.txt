@@ -100,14 +100,14 @@ else()
         --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/early_wasm_table.js
         --post-js ${CMAKE_CURRENT_SOURCE_DIR}/compat_wasm_imports.js
         --post-js ${CMAKE_CURRENT_SOURCE_DIR}/safe_unbound_types.js
-        -O3
-        -flto
+        -O1
+        -g
     )
     string(REPLACE ";" " " EMCC_LINK_FLAGS "${EMCC_LINK_FLAGS_LIST}")
     
     set(EMCC_COMPILE_OPTIONS
-        -O3
-        -flto
+        -O1
+        -g
         -fno-exceptions
         -fno-rtti
         -DEMSCRIPTEN_HAS_UNBOUND_TYPE_NAMES=0
