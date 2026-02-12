@@ -60,7 +60,7 @@ if(ENABLE_WASM_DEBUG)
         -s "EXPORTED_RUNTIME_METHODS=[\"ccall\",\"cwrap\",\"getValue\",\"setValue\",\"HEAPF32\"]"
         -s ALLOW_MEMORY_GROWTH=1
         -s INITIAL_MEMORY=16777216
-        -s STACK_SIZE=1048576
+        -s STACK_SIZE=2097152
         -s NO_EXIT_RUNTIME=1
         -s ENVIRONMENT=web,worker
         -s SINGLE_FILE=0
@@ -92,7 +92,7 @@ else()
         -s "EXPORTED_RUNTIME_METHODS=[\"ccall\",\"cwrap\",\"getValue\",\"setValue\",\"HEAPF32\"]"
         -s ALLOW_MEMORY_GROWTH=1
         -s INITIAL_MEMORY=16777216
-        -s STACK_SIZE=1048576
+        -s STACK_SIZE=2097152
         -s NO_EXIT_RUNTIME=1
         -s ENVIRONMENT=web,worker
         -s SINGLE_FILE=0
@@ -135,7 +135,7 @@ if(ENABLE_WASM_DEBUG)
         -s "EXPORTED_RUNTIME_METHODS=[\"ccall\",\"cwrap\",\"getValue\",\"setValue\",\"HEAPF32\"]"
         -s ALLOW_MEMORY_GROWTH=1
         -s INITIAL_MEMORY=16777216
-        -s STACK_SIZE=1048576
+        -s STACK_SIZE=2097152
         -s NO_EXIT_RUNTIME=1
         -s ENVIRONMENT=worker
         -s SINGLE_FILE=1
@@ -166,7 +166,7 @@ else()
         -s "EXPORTED_RUNTIME_METHODS=[\"ccall\",\"cwrap\",\"getValue\",\"setValue\",\"HEAPF32\"]"
         -s ALLOW_MEMORY_GROWTH=1
         -s INITIAL_MEMORY=16777216
-        -s STACK_SIZE=1048576
+        -s STACK_SIZE=2097152
         -s NO_EXIT_RUNTIME=1
         -s ENVIRONMENT=worker
         -s SINGLE_FILE=1
