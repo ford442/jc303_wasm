@@ -92,22 +92,21 @@ else()
         -s "EXPORTED_RUNTIME_METHODS=[\"ccall\",\"cwrap\",\"getValue\",\"setValue\",\"HEAPF32\"]"
         -s ALLOW_MEMORY_GROWTH=1
         -s INITIAL_MEMORY=16777216
-        -s STACK_SIZE=2097152
+        -s STACK_SIZE=4194304
         -s NO_EXIT_RUNTIME=1
         -s ENVIRONMENT=web,worker
         -s SINGLE_FILE=0
+        -s STACK_OVERFLOW_CHECK=2
         --bind
         --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/early_wasm_table.js
         --post-js ${CMAKE_CURRENT_SOURCE_DIR}/compat_wasm_imports.js
         --post-js ${CMAKE_CURRENT_SOURCE_DIR}/safe_unbound_types.js
-        -O1
-        -g
+        -O2
     )
     string(REPLACE ";" " " EMCC_LINK_FLAGS "${EMCC_LINK_FLAGS_LIST}")
     
     set(EMCC_COMPILE_OPTIONS
-        -O1
-        -g
+        -O2
         -fno-exceptions
         -fno-rtti
         -DEMSCRIPTEN_HAS_UNBOUND_TYPE_NAMES=0
@@ -135,10 +134,11 @@ if(ENABLE_WASM_DEBUG)
         -s "EXPORTED_RUNTIME_METHODS=[\"ccall\",\"cwrap\",\"getValue\",\"setValue\",\"HEAPF32\"]"
         -s ALLOW_MEMORY_GROWTH=1
         -s INITIAL_MEMORY=16777216
-        -s STACK_SIZE=2097152
+        -s STACK_SIZE=4194304
         -s NO_EXIT_RUNTIME=1
         -s ENVIRONMENT=worker
         -s SINGLE_FILE=1
+        -s STACK_OVERFLOW_CHECK=2
         --bind
         --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/early_wasm_table.js
         --post-js ${CMAKE_CURRENT_SOURCE_DIR}/compat_wasm_imports.js
@@ -166,22 +166,21 @@ else()
         -s "EXPORTED_RUNTIME_METHODS=[\"ccall\",\"cwrap\",\"getValue\",\"setValue\",\"HEAPF32\"]"
         -s ALLOW_MEMORY_GROWTH=1
         -s INITIAL_MEMORY=16777216
-        -s STACK_SIZE=2097152
+        -s STACK_SIZE=4194304
         -s NO_EXIT_RUNTIME=1
         -s ENVIRONMENT=worker
         -s SINGLE_FILE=1
+        -s STACK_OVERFLOW_CHECK=2
         --bind
         --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/early_wasm_table.js
         --post-js ${CMAKE_CURRENT_SOURCE_DIR}/compat_wasm_imports.js
         --post-js ${CMAKE_CURRENT_SOURCE_DIR}/safe_unbound_types.js
-        -O3
-        -flto
+        -O2
     )
     string(REPLACE ";" " " EMCC_WORKLET_LINK_FLAGS "${EMCC_WORKLET_LINK_FLAGS_LIST}")
     
     set(EMCC_WORKLET_COMPILE_OPTIONS
-        -O3
-        -flto
+        -O2
         -fno-exceptions
         -fno-rtti
         -DEMSCRIPTEN_HAS_UNBOUND_TYPE_NAMES=0

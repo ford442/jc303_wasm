@@ -110,13 +110,16 @@ void MipMappedWaveTable::normalize()
 void MipMappedWaveTable::reverseTime()
 {
   int    i;
-  double tmpTable[tableLength+4];
+  // FIX: Moved from stack to heap to prevent stack overflow in WASM
+  double* tmpTable = new double[tableLength+4];
 
   for(i=0; i<tableLength; i++)
     tmpTable[i] = prototypeTable[tableLength-i-1];
 
   for(i=0; i<tableLength; i++)
     prototypeTable[i] = tmpTable[i];
+    
+  delete[] tmpTable;
 }
 
 void MipMappedWaveTable::renderWaveform()
@@ -136,7 +139,8 @@ void MipMappedWaveTable::renderWaveform()
 
 void MipMappedWaveTable::generateMipMap()
 {
-  double spectrum[tableLength];
+  // FIX: Moved from stack to heap to prevent stack overflow in WASM
+  double* spectrum = new double[tableLength];
   int t, i; // indices for the table and position
 
   //position = 0;             // begin of the 1st table (index 0)
@@ -185,6 +189,9 @@ void MipMappedWaveTable::generateMipMap()
     tableSet[t][tableLength+2] = tableSet[t][2];
     tableSet[t][tableLength+3] = tableSet[t][3];
   }
+  
+  // FIX: Clean up heap allocation
+  delete[] spectrum;
 }
 
 //-------------------------------------------------------------------------------------------------
